@@ -2,23 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Clinic &amp; Inventory</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <meta name="theme-color" content="#0d6e63">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Clinic">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
-  body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#0d6e63,#0a4a52 60%,#3c2fa0);color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:center;padding:24px;box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;display:grid;place-items:center;background:linear-gradient(135deg,#0d6e63,#0a4a52 60%,#3c2fa0);color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:center;padding:24px;box-sizing:border-box}
   img{width:104px;height:104px;border-radius:24px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
-  h1{font-size:1.4rem;margin:16px 0 6px} p{margin:6px 0;opacity:.9;max-width:340px}
+  h1{font-size:1.4rem;margin:16px 0 6px} p{margin:6px auto;opacity:.92;max-width:340px;line-height:1.45}
   .btn{display:inline-block;margin-top:14px;padding:12px 22px;border-radius:12px;border:0;font:inherit;font-weight:700;background:#fff;color:#0d6e63;text-decoration:none;cursor:pointer}
   .btn.o{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.6)}
   #install{display:none}
+  body.frame{display:block;padding:0;background:#0d6e63}
+  body.frame iframe{position:fixed;left:0;right:0;border:0;background:#fff;top:env(safe-area-inset-top,0px);height:calc(100% - env(safe-area-inset-top,0px));width:100%}
 </style>
 </head>
 <body>
-<div>
+<div id="home">
   <img src="icon-512.png" alt="">
   <h1>Clinic &amp; Inventory</h1>
   <p id="msg">Opening…</p>
@@ -29,7 +36,9 @@
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
   var ok = typeof APP_URL === 'string' && /^https:\/\//.test(APP_URL);
-  var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
+  var mode = (typeof OPEN_MODE === 'string') ? OPEN_MODE : 'frame';
+  var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var msg = document.getElementById('msg'), openBtn = document.getElementById('open'), installBtn = document.getElementById('install');
   if (!ok) {
     msg.textContent = 'Setup needed: open config.js and paste your app link.';
@@ -37,7 +46,14 @@
   } else {
     openBtn.href = APP_URL;
     if (standalone) {
-      setTimeout(function () { location.replace(APP_URL); }, 250);   // launched from the home-screen icon
+      if (mode === 'redirect') {
+        setTimeout(function () { location.replace(APP_URL); }, 250);
+      } else {
+        document.body.className = 'frame';
+        document.body.innerHTML = '<iframe src="' + APP_URL + '" title="Clinic &amp; Inventory" allow="clipboard-write"></iframe>';
+      }
+    } else if (isIOS) {
+      msg.textContent = 'To install: tap the Share button in Safari, then choose "Add to Home Screen".';
     } else {
       msg.textContent = 'Tap Install to add this app to your home screen. After that, the icon opens your clinic app directly.';
     }
